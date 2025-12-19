@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  Compile:
+  Code-Compile:
     name: Compile
     runs-on: ubuntu-latest
     outputs:
@@ -37,9 +37,9 @@ jobs:
       - name: Compile project
         run: mvn clean compile -B
 
-  Test:
-    name: Test
-    needs: Compile   # Ensures this job runs after Compile
+  Unit-Tests:
+    name: Unit-Tests
+    needs: Code-Compile
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
