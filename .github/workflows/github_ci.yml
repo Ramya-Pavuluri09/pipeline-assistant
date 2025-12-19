@@ -39,7 +39,7 @@ jobs:
 
   Test:
     name: Test
-    needs: compile   # Ensures this job runs after compile
+    needs: Compile   # Ensures this job runs after Compile
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -60,5 +60,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      - name: Run tests
-        run: mvn test -B
+      - name: Run tests and generate coverage
+        run: mvn -B clean verify
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
