@@ -1,31 +1,64 @@
-# Trigger the workflow on push or pull request to main or develop branch
+name: Java CI with Maven
+
 on:
   push:
     branches:
       - main
-      - develop
   pull_request:
     branches:
       - main
-      - develop
 
 jobs:
-  build:
+  Compile:
+    name: Compile
     runs-on: ubuntu-latest
-
+    outputs:
+      maven-cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
           cache: maven
 
-      # Step 3: Build with Maven and run tests
-      - name: Build and Test
-        run: mvn clean verify
+      - name: Cache Maven packages
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Compile project
+        run: mvn clean compile -B
+
+  Test:
+    name: Test
+    needs: compile   # Ensures this job runs after compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Restore Maven cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Run tests
+        run: mvn test -B
